@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Updated import
-import { User, Lock, Shield, Upload, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, Lock, Shield, AlertCircle } from "lucide-react";
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -19,21 +20,76 @@ const LoginPage = () => {
     familyHistory: "",
     lifestyle: "sedentary",
   });
-  const navigate = useNavigate(); // Updated line
+
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError("");
+  };
+
+  const validateForm = () => {
+    if (!formData.email || !formData.password) {
+      setError("Please fill in all required fields");
+      return false;
+    }
+    if (!isLogin) {
+      if (
+        !formData.fullName ||
+        !formData.ssn ||
+        !formData.dateOfBirth ||
+        !formData.phone ||
+        !formData.address
+      ) {
+        setError("Please fill in all required fields");
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate blockchain encryption and API call
-    console.log("Form submitted:", formData);
-    alert("Success! Redirecting to dashboard...");
-    navigate("/dashboard"); // Updated line
+    if (!validateForm()) return;
+
+    if (isLogin) {
+      // Handle Login
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const user = users.find((u) => u.email === formData.email);
+
+      if (!user) {
+        setError("User not found. Please register first.");
+        return;
+      }
+
+      if (user.password !== formData.password) {
+        setError("Incorrect password");
+        return;
+      }
+
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      navigate("/dashboard");
+    } else {
+      // Handle Registration
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = users.find((u) => u.email === formData.email);
+
+      if (existingUser) {
+        setError("Email already registered");
+        return;
+      }
+
+      const newUser = { ...formData };
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem("currentUser", JSON.stringify(newUser));
+
+      alert("Registration successful! Redirecting to dashboard...");
+      navigate("/dashboard");
+    }
   };
 
   return (
@@ -52,7 +108,10 @@ const LoginPage = () => {
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-500"
               }`}
-              onClick={() => setIsLogin(true)}
+              onClick={() => {
+                setIsLogin(true);
+                setError("");
+              }}
             >
               Login
             </button>
@@ -62,11 +121,21 @@ const LoginPage = () => {
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-500"
               }`}
-              onClick={() => setIsLogin(false)}
+              onClick={() => {
+                setIsLogin(false);
+                setError("");
+              }}
             >
               Register
             </button>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -106,6 +175,7 @@ const LoginPage = () => {
                       className="w-full p-2 border rounded-lg"
                       value={formData.fullName}
                       onChange={handleInputChange}
+                      required
                     />
                     <input
                       type="text"
@@ -114,6 +184,7 @@ const LoginPage = () => {
                       className="w-full p-2 border rounded-lg"
                       value={formData.ssn}
                       onChange={handleInputChange}
+                      required
                     />
                     <input
                       type="date"
@@ -121,6 +192,7 @@ const LoginPage = () => {
                       className="w-full p-2 border rounded-lg"
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
+                      required
                     />
                     <input
                       type="tel"
@@ -129,6 +201,7 @@ const LoginPage = () => {
                       className="w-full p-2 border rounded-lg"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      required
                     />
                     <input
                       type="text"
@@ -137,6 +210,7 @@ const LoginPage = () => {
                       className="w-full p-2 border rounded-lg"
                       value={formData.address}
                       onChange={handleInputChange}
+                      required
                     />
                   </div>
                 </div>
