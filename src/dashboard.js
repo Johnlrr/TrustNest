@@ -7,7 +7,7 @@ import {
   Check,
   AlertCircle,
   Download,
-  Cat as CompareIcon,
+  CircleArrowRightIcon as CompareIcon,
   DollarSign,
   ShieldCheck,
   AlertTriangle,
@@ -517,7 +517,19 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      <ChatBot />
     </div>
+  );
+};
+
+const ChatBot = () => {
+  return (
+    <df-messenger
+      intent="WELCOME"
+      chat-title="TrustNest Chatbot"
+      agent-id="8656aedc-4c68-4b5f-a4a4-f5071cd80d8d"
+      language-code="en"
+    ></df-messenger>
   );
 };
 
