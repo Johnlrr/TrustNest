@@ -109,47 +109,58 @@ const Dashboard = () => {
     });
   };
 
-  const compareContracts = async () => {
+  const analyzeContracts = async () => {
     setLoading(true);
     try {
       const mainAnalysis = await performContractAnalysis(uploadedFiles.main);
-      const compareAnalysis = await performContractAnalysis(
-        uploadedFiles.compare
-      );
 
-      const comparisonResult = {
-        summary: "Contract B offers better value with lower fraud risk",
-        pricingComparison: {
-          difference: "150,000 VND monthly",
-          betterValue: "Contract B",
-        },
-        coverageComparison: {
-          broader: "Contract A",
-          keyDifferences: [
-            "Contract A includes dental coverage",
-            "Contract B has better critical illness coverage",
-            "Contract A has longer waiting period",
-          ],
-        },
-        riskAssessment: {
-          fraudRisk: {
-            contractA: "Medium",
-            contractB: "Low",
-          },
-          ambiguityScore: {
-            contractA: 72,
-            contractB: 85,
-          },
-        },
-        recommendation:
-          "Contract B is recommended due to clearer terms and better pricing",
-      };
+      // If there's a second file, perform comparison analysis
+      if (uploadedFiles.compare) {
+        const compareAnalysis = await performContractAnalysis(
+          uploadedFiles.compare
+        );
 
-      setComparison(comparisonResult);
-      setAnalysisResults({
-        main: mainAnalysis,
-        compare: compareAnalysis,
-      });
+        const comparisonResult = {
+          summary: "Contract B offers better value with lower fraud risk",
+          pricingComparison: {
+            difference: "150,000 VND monthly",
+            betterValue: "Contract B",
+          },
+          coverageComparison: {
+            broader: "Contract A",
+            keyDifferences: [
+              "Contract A includes dental coverage",
+              "Contract B has better critical illness coverage",
+              "Contract A has longer waiting period",
+            ],
+          },
+          riskAssessment: {
+            fraudRisk: {
+              contractA: mainAnalysis.fraudRisk.level,
+              contractB: compareAnalysis.fraudRisk.level,
+            },
+            ambiguityScore: {
+              contractA: mainAnalysis.ambiguityAnalysis.score,
+              contractB: compareAnalysis.ambiguityAnalysis.score,
+            },
+          },
+          recommendation:
+            "Contract B is recommended due to clearer terms and better pricing",
+        };
+
+        setComparison(comparisonResult);
+        setAnalysisResults({
+          main: mainAnalysis,
+          compare: compareAnalysis,
+        });
+      } else {
+        // If only one file, just set the main analysis
+        setAnalysisResults({
+          main: mainAnalysis,
+          compare: null,
+        });
+        setComparison(null);
+      }
     } catch (error) {
       console.error("Analysis failed:", error);
     }
@@ -162,6 +173,43 @@ const Dashboard = () => {
       ...prev,
       [type]: file,
     }));
+  };
+
+  const renderSingleAnalysis = (analysis, title = "Contract Analysis") => {
+    if (!analysis) return null;
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
+        {renderAnalysisResults(analysis)}
+      </div>
+    );
+  };
+
+  const renderAnalysisSection = () => {
+    if (!analysisResults.main) return null;
+
+    return (
+      <div className="space-y-8">
+        {analysisResults.compare ? (
+          <>
+            <div className="grid grid-cols-2 gap-8">
+              {renderSingleAnalysis(
+                analysisResults.main,
+                "Contract A Analysis"
+              )}
+              {renderSingleAnalysis(
+                analysisResults.compare,
+                "Contract B Analysis"
+              )}
+            </div>
+            {renderComparison()}
+          </>
+        ) : (
+          renderSingleAnalysis(analysisResults.main)
+        )}
+      </div>
+    );
   };
 
   // Render Functions
@@ -451,7 +499,7 @@ const Dashboard = () => {
 
                 <div className="flex justify-center">
                   <button
-                    onClick={compareContracts}
+                    onClick={analyzeContracts}
                     className="bg-blue-500 text-white px-8 py-3 rounded-lg hover:bg-blue-600 transition-colors"
                     disabled={loading || !uploadedFiles.main}
                   >
@@ -463,9 +511,7 @@ const Dashboard = () => {
                   </button>
                 </div>
 
-                {analysisResults.main &&
-                  renderAnalysisResults(analysisResults.main)}
-                {comparison && renderComparison()}
+                {renderAnalysisSection()}
               </div>
             )}
           </div>
