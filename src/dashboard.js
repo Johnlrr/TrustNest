@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { RecommendationEngine } from "./recommendationService";
 import {
   FileText,
   Upload,
@@ -27,31 +28,40 @@ const Dashboard = () => {
   const [comparison, setComparison] = useState(null);
   const [recommendations, setRecommendations] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
-  // Insurance Recommendations Functions
+  useEffect(() => {
+    // Fetch user profile from localStorage or your authentication system
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser) {
+      setUserProfile(currentUser);
+    }
+  }, []);
+
+  // Modified getRecommendations function
   const getRecommendations = () => {
+    if (!userProfile) {
+      setError("User profile not found");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setRecommendations([
-        {
-          provider: "Bao Viet Insurance",
-          planName: "HealthCare Plus",
-          coverage: "1,000,000,000 VND",
-          monthlyPremium: "800,000 VND",
-          benefits: ["Hospitalization", "Surgery", "Outpatient", "Dental"],
-          match: "95%",
-        },
-        {
-          provider: "Prudential Vietnam",
-          planName: "Family Care",
-          coverage: "800,000,000 VND",
-          monthlyPremium: "650,000 VND",
-          benefits: ["Hospitalization", "Critical Illness", "Accident"],
-          match: "87%",
-        },
-      ]);
+    try {
+      const recommendationEngine = new RecommendationEngine();
+      const recommendations =
+        recommendationEngine.getRecommendations(userProfile);
+
+      if (recommendations.length === 0) {
+        setError("No matching insurance plans found for your profile");
+        setRecommendations([]);
+      } else {
+        setRecommendations(recommendations);
+      }
+    } catch (error) {
+      setError("Error generating recommendations: " + error.message);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   // Contract Analysis Functions
