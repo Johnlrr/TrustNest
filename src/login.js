@@ -4,6 +4,7 @@ import { User, Lock, Shield, AlertCircle } from "lucide-react";
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isInsurer, setIsInsurer] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
@@ -19,14 +20,27 @@ const LoginPage = () => {
     currentMedications: "",
     familyHistory: "",
     lifestyle: "sedentary",
+    clientType: "normal", // Added client type
+    companyName: "",
+    registrationNumber: "",
+    taxId: "",
+    businessAddress: "",
+    websiteUrl: "",
+    representativeName: "",
+    jobTitle: "",
+    representativePhone: "",
+    licenseDetails: "",
+    insuranceTypes: "",
+    termsAccepted: false,
   });
 
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === "checkbox" ? checked : value,
     });
     setError("");
   };
@@ -37,15 +51,34 @@ const LoginPage = () => {
       return false;
     }
     if (!isLogin) {
-      if (
-        !formData.fullName ||
-        !formData.ssn ||
-        !formData.dateOfBirth ||
-        !formData.phone ||
-        !formData.address
-      ) {
-        setError("Please fill in all required fields");
-        return false;
+      if (formData.clientType === "normal") {
+        if (
+          !formData.fullName ||
+          !formData.ssn ||
+          !formData.dateOfBirth ||
+          !formData.phone ||
+          !formData.address
+        ) {
+          setError("Please fill in all required fields");
+          return false;
+        }
+      } else if (formData.clientType === "insurer") {
+        if (
+          !formData.companyName ||
+          !formData.registrationNumber ||
+          !formData.taxId ||
+          !formData.businessAddress ||
+          !formData.websiteUrl ||
+          !formData.representativeName ||
+          !formData.jobTitle ||
+          !formData.representativePhone ||
+          !formData.licenseDetails ||
+          !formData.insuranceTypes ||
+          !formData.termsAccepted
+        ) {
+          setError("Please fill in all required fields");
+          return false;
+        }
       }
     }
     return true;
@@ -71,7 +104,9 @@ const LoginPage = () => {
       }
 
       localStorage.setItem("currentUser", JSON.stringify(user));
-      navigate("/dashboard");
+      navigate(
+        user.clientType === "insurer" ? "/insurer-dashboard" : "/dashboard"
+      );
     } else {
       // Handle Registration
       const users = JSON.parse(localStorage.getItem("users") || "[]");
@@ -88,7 +123,9 @@ const LoginPage = () => {
       localStorage.setItem("currentUser", JSON.stringify(newUser));
 
       alert("Registration successful! Redirecting to dashboard...");
-      navigate("/dashboard");
+      navigate(
+        newUser.clientType === "insurer" ? "/insurer-dashboard" : "/dashboard"
+      );
     }
   };
 
@@ -165,113 +202,212 @@ const LoginPage = () => {
               <>
                 <div className="border-t pt-4 mt-4">
                   <h3 className="font-semibold text-gray-700 mb-4">
-                    Personal Information
+                    Client Type
                   </h3>
                   <div className="space-y-3">
-                    <input
-                      type="text"
-                      name="fullName"
-                      placeholder="Full Name"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="ssn"
-                      placeholder="Social Security Number"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.ssn}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="date"
-                      name="dateOfBirth"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.dateOfBirth}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="Phone Number"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="address"
-                      placeholder="Address"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold text-gray-700 mb-4">
-                    Financial & Health Information
-                  </h3>
-                  <div className="space-y-3">
-                    <input
-                      type="number"
-                      name="salary"
-                      placeholder="Monthly Salary (VND)"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.salary}
-                      onChange={handleInputChange}
-                    />
-                    <input
-                      type="text"
-                      name="occupation"
-                      placeholder="Occupation"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.occupation}
-                      onChange={handleInputChange}
-                    />
-                    <textarea
-                      name="healthHistory"
-                      placeholder="Health History"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.healthHistory}
-                      onChange={handleInputChange}
-                      rows="3"
-                    />
-                    <textarea
-                      name="currentMedications"
-                      placeholder="Current Medications"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.currentMedications}
-                      onChange={handleInputChange}
-                      rows="2"
-                    />
-                    <textarea
-                      name="familyHistory"
-                      placeholder="Family Medical History"
-                      className="w-full p-2 border rounded-lg"
-                      value={formData.familyHistory}
-                      onChange={handleInputChange}
-                      rows="2"
-                    />
                     <select
-                      name="lifestyle"
+                      name="clientType"
                       className="w-full p-2 border rounded-lg"
-                      value={formData.lifestyle}
-                      onChange={handleInputChange}
+                      value={formData.clientType}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        setIsInsurer(e.target.value === "insurer");
+                      }}
                     >
-                      <option value="sedentary">Sedentary</option>
-                      <option value="moderate">Moderately Active</option>
-                      <option value="active">Very Active</option>
+                      <option value="normal">Normal Client</option>
+                      <option value="insurer">Insurer</option>
                     </select>
                   </div>
                 </div>
+
+                {formData.clientType === "normal" && (
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="font-semibold text-gray-700 mb-4">
+                      Personal Information
+                    </h3>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        name="fullName"
+                        placeholder="Full Name"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="ssn"
+                        placeholder="Social Security Number"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.ssn}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="tel"
+                        name="phone"
+                        placeholder="Phone Number"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="address"
+                        placeholder="Address"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formData.clientType === "insurer" && (
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="font-semibold text-gray-700 mb-4">
+                      Business Information
+                    </h3>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        name="companyName"
+                        placeholder="Company Name"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.companyName}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="registrationNumber"
+                        placeholder="Registration Number"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.registrationNumber}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="taxId"
+                        placeholder="Tax Identification Number"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.taxId}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="businessAddress"
+                        placeholder="Business Address"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.businessAddress}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="url"
+                        name="websiteUrl"
+                        placeholder="Website URL"
+                        className="w-full p-2 border rounded-lg"
+                        value={formData.websiteUrl}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+
+                    <div className="border-t pt-4 mt-4">
+                      <h3 className="font-semibold text-gray-700 mb-4">
+                        Representative Information
+                      </h3>
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          name="representativeName"
+                          placeholder="Full Name"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.representativeName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <input
+                          type="text"
+                          name="jobTitle"
+                          placeholder="Job Title"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.jobTitle}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <input
+                          type="tel"
+                          name="representativePhone"
+                          placeholder="Phone Number"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.representativePhone}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4 mt-4">
+                      <h3 className="font-semibold text-gray-700 mb-4">
+                        Insurance Services
+                      </h3>
+                      <div className="space-y-3">
+                        <textarea
+                          name="licenseDetails"
+                          placeholder="License or Accreditation Details"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.licenseDetails}
+                          onChange={handleInputChange}
+                          rows="3"
+                          required
+                        />
+                        <textarea
+                          name="insuranceTypes"
+                          placeholder="Types of Insurance Offered"
+                          className="w-full p-2 border rounded-lg"
+                          value={formData.insuranceTypes}
+                          onChange={handleInputChange}
+                          rows="3"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4 mt-4">
+                      <h3 className="font-semibold text-gray-700 mb-4">
+                        Terms and Conditions
+                      </h3>
+                      <div className="space-y-3">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="termsAccepted"
+                            className="mr-2"
+                            checked={formData.termsAccepted}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <span>I accept the terms and conditions</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
